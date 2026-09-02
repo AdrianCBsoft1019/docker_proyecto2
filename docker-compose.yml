@@ -1,5 +1,5 @@
 services:
-  devsecops-db:
+  roderick-db:
     image: mysql:8.0
     container_name: roderick2
     restart: always
@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 5
 
-  devsecops-api:
+  roderick-api:
     build: .
     container_name: roderick-flask-api
     restart: always
@@ -78,5 +78,5 @@ networks:
 volumes:
   roderick-db-data:
     name: roderick-db-data
-  uptime-kuma-data:
+  roderick-uptime-kuma-data:
     name: roderick-uptime-kuma-data
