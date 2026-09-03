@@ -1,14 +1,16 @@
+import os
+
 from flask import Flask, request, render_template, redirect, url_for
 import pymysql
 
 app = Flask(__name__)
 
 DB_CONFIG = {
-    'host': 'contenedor-servidor-bd-nareth',          
-    'user': 'root',
-    'password': 'sena123',
-    'database': 'bd-de-nareth',              
-    'connect_timeout': 3  
+    'host': os.environ.get('DB_HOST', 'mysql-db'),
+    'user': os.environ.get('DB_USER', 'root'),
+    'password': os.environ.get('DB_PASSWORD'),   # ya no hardcodeada
+    'database': os.environ.get('DB_NAME', 'bd-de-nareth'),
+    'connect_timeout': 3
 }
 
 def get_db_connection():
@@ -81,4 +83,6 @@ def version():
     return "<h1>Estas verificado para explorar el maravilloso mundo de Gomball y Darwin</h1>", 201
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5050, debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host="0.0.0.0", port=5050, debug=debug_mode) # nosec B104
+    
