@@ -16,6 +16,11 @@ DB_CONFIG = {
 def get_db_connection():
     return pymysql.connect(**DB_CONFIG)
 
+@app.route('/health')
+def health():
+    return {"status": "healthy"}, 200
+
+
 def init_db():
     try:
         conn = get_db_connection()
@@ -85,4 +90,4 @@ def version():
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(host="0.0.0.0", port=5050, debug=debug_mode) # nosec B104
-    
+
