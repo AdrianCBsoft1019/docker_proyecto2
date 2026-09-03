@@ -1,0 +1,76 @@
+name: roderick
+on:
+  push:
+    branches: ["main"]
+jobs:
+  test-and-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo 
+        uses: actions/checkout@v3
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest bandit
+      - name: Escaneo de seguridad con Bandit
+        run: bandit -r . -s B101 
+        
+      - name: Ejecutar pruebas con pytest
+        run: pytest 
+        
+  build-and-push:
+    needs: test-and-security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v3
+      - name: Iniciar sesion en DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Construir imagen Flask API
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          load: true
+          no-cache: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/roderick-flask-api:latest
+        
+      - name: Escanear contenedor con Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/roderick-flask-api:latest
+          format: 'table'
+          exit-code: '1' 
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          scanners: 'vuln,secret'
+          severity: 'CRITICAL'
+        
+      - name: Publicar imagen en DockerHub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/roderick-flask-api:latest
+  deploy-to-ec2:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar en servidor AWS EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd ~/docker_proyecto2 || git clone https://github.com/AdrianCBsoft1019/docker_proyecto2.git ~/docker_proyecto2
+            cd ~/docker_proyecto2
+            git pull origin main
+            docker compose pull
+            docker compose up -d --build
+            docker image prune -f

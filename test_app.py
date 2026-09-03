@@ -1,6 +1,13 @@
+import pytest
 from simple_app import app
 
-def test_index_route():
-    tester = app.test_client()
-    response = tester.get('/')
-    assert response.status_code in [200, 500]
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        yield client
+
+def test_health(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json == {"status": "healthy"}
