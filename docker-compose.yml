@@ -24,13 +24,13 @@ services:
       - "5000:5000"
     environment:
       FLASK_ENV: development
-      DB_HOST: roderick-db
+      DB_HOST: roderick2
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-adminpassword}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-flaskdb}
     networks:
       - red-roderick
     depends_on:
-      devsecops-db:
+      roderick-db:
         condition: service_healthy
 
   uptime-kuma:
@@ -40,7 +40,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - uptime-kuma-data:/app/data
+      - roderick-uptime-kuma-data:/app/data
     networks:
       - red-roderick
 
